@@ -1,0 +1,168 @@
+---
+title: "Análise de sobrevivência de idosos portadores de doença renal crônica em hemodiálise: estudo restrospectivo com dados do Registro de Diálise e Transplante Austríaco"
+author: "**Karla de Araujo Ferreira**"
+lang: pt
+format:
+    pdf: default
+    html: 
+      self-contained: true
+csl: epidemiology.csl
+bibliography: references.bib
+---
+
+**Programa de Pós-Graduação Stricto-Sensu em Epidemiologia em Saúde Pública, Escola Nacional de Saúde Pública Sergio Arouca, Fundação Oswaldo Cruz. Rio de Janeiro, fevereiro de 2023.**
+
+**Disciplina: Introdução à Análise de Sobrevivência - 2023**
+
+\newpage
+
+```{r pacotes, include=FALSE, message=FALSE, warning=FALSE}
+#instalar e carregar pacotes
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(
+  here, #caminho do projeto
+  readxl, #ler arquivo excel
+  tableone, #fazer tabela 1
+  kableExtra,#renderizar tabela
+  knitr, #renderizar tabela
+  DescTools, #organizar variaveis
+  descr, #analise descritiva
+  finalfit, #checar dados faltantes
+  tidyverse,
+  ResourceSelection, #qualidade do ajuste
+  ggplot2,
+  gtsummary, # tabela OR e IC 
+  gridExtra, # forest plot OR e IC 
+  equatiomatic #escrever equacoes 
+  )
+
+```
+
+```{r banco, include=FALSE, message=FALSE, warning=FALSE}
+# 0. Leitura do banco de dados
+
+#ler banco de dados
+data<-readxl::read_excel(here::here("data.xlsx"), sheet = "publicData")
+#estrutura do banco
+str(data)
+
+```
+
+```{r organiza, include=FALSE, message=FALSE, warning=FALSE}
+#1. Organizar banco
+#transformar covariaveis em fator e idade em valor 
+data<-cbind(lapply(data[,1:10],as.factor), (data[,11:13]))
+data$idade<-round(data$age10*10,0)
+
+str(data)
+
+#Apenas pacientes em dialise
+data<-subset(data,dialysis == 1 )
+
+
+```
+
+```{r tab1,include=FALSE, message=FALSE, warning=FALSE}
+#Análise exploratória
+# Tabela 1
+
+#normalidade - idade
+hist(data$idade)
+#nao e normalmente distribuida
+
+tab1 <- tableone::CreateTableOne(vars = c("Gender","DM","hypert",
+                                "heart","","neoplasia",
+                                "liver","vascular","COPD",
+                                "idade"), 
+                                strata = "dead",test = TRUE,                                       includeNA = TRUE, data = data)
+
+tabela1<-print (tab1, showAllLevels = TRUE,nonnormal = "idade")
+
+tabela1<-tabela1[,1:3]
+
+tabela1[,1]<-ifelse(tabela1[,1] == "0", "Não", tabela1[,1] )
+tabela1[,1]<-ifelse(tabela1[,1] == "1", "Sim", tabela1[,1] )
+
+tabela1<- as.data.frame(tabela1)
+
+tabela1$variav<-c("N","Sexo(%)","",
+                      "Diabetes mellitus (%)","","Hipertensão (%)",
+                      "","Doença coração(%)","",
+                      "Neoplasia (%)", "","Doença hepática (%)",
+                      "","Doença vascular (%)", "",
+                      "DPOC (%)", "", "Idade (mediana [IQR])")
+
+
+tabela1<-data.frame(tabela1[,c(4,1,2,3)])
+
+colnames(tabela1)<-c("Característica","", "Não óbito", "Óbito")
+
+rownames(tabela1) <- NULL
+```
+
+
+```{r Tabela1}
+#| label: tbl-Tabela1
+#| tbl-cap: "Características da coorte de idosos que iniciaram hemodiálise entre 2002 e 2009, segundo status (óbito)."
+#| warning: false
+#| echo: false
+#| message: false
+
+kbl(tabela1, align = "lcccc") %>%
+kable_classic(full_width = F) %>%
+footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
+)
+```
+
+\newpage
+
+
+
+
+```{r}
+#Objeto surival
+y <- survival::Surv(data$Time_to_Event, data$dead)
+
+# Estimando as curvas de sobrevivência pelo Kaplan-Meier para diversas variáveis
+KMgender <- survival::survfit(y ~ Gender, data = data)
+KMDM <- survival::survfit(y ~ DM, data = data)
+KMhypert <- survival::survfit(y ~ hypert, data = data)
+KMheart <- survival::survfit(y ~ heart, data = data)
+KMneo <- survival::survfit(y ~ neoplasia, data = data)
+KMliver <- survival::survfit(y ~ liver, data = data)
+KMvascular <- survival::survfit(y ~ vascular, data = data)
+KMCOPD <- survival::survfit(y ~ COPD, data = data)
+
+
+# Gráfico das curvas de Kaplan-Meier
+par(mfrow = c(2, 2))
+#SEXO
+plot(KMgender, main = "Sexo", col = 1:2)
+legend (100, 0.2, c("F", "M"), col=1:2,lty=1)
+# DM
+plot(KMDM, main = "DM", col = 1:2)
+legend(100,0.2, c("Não", "Sim"), col=1:2, lty=1)
+# HIPERTENSAO
+plot(KMhypert, main = "Hipertensão", col = 1:2)
+legend (100, 0.2, c("Não", "Sim"), col=1:2, lty=1)
+# HEART
+plot(KMheart, main = "Coração", col = 1:3)
+legend (500, 1.1, c("Não", "Sim"), col=1:2, lty=1)
+
+par(mfrow = c(2, 2))
+#Neoplasia
+plot(KMneo, main = "Neolasia", col = 1:2)
+legend (100, 0.2, c("Não", "Sim"), col=1:2,lty=1)
+# Liver
+plot(KMliver, main = "Fígado", col = 1:2)
+legend(100,0.2, c("Não", "Sim"), col=1:2, lty=1)
+# Vascular
+plot(KMvascular, main = "Vascular", col = 1:2)
+legend (100, 0.2, c("Não", "Sim"), col=1:2, lty=1)
+# DPOC
+plot(KMheart, main = "DPOC", col = 1:3)
+legend (500, 1.1, c("Não", "Sim"), col=1:2, lty=1)
+
+
+```
+
