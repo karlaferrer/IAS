@@ -25,13 +25,17 @@ pacman::p_load(
   tableone, #fazer tabela 1
   kableExtra,#renderizar tabela
   knitr, #renderizar tabela
-  DescTools, #organizar variaveis
-  descr, #analise descritiva
+  survival, #analise de sobrevivencia
+  lubridate,
+  ggsurvfit,
+  gtsummary, # tabela OR e IC 
+  tidycmprsk, 
+  condsurv,
+  patchwork, #compor graficos ggplot
   finalfit, #checar dados faltantes
   tidyverse,
   ResourceSelection, #qualidade do ajuste
   ggplot2,
-  gtsummary, # tabela OR e IC 
   gridExtra, # forest plot OR e IC 
   equatiomatic #escrever equacoes 
   )
@@ -117,52 +121,294 @@ footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
 \newpage
 
 
+```{r KMglobal}
+#Status nao pode ser fator!
+data$dead<-as.numeric(data$dead)
 
-
-```{r}
 #Objeto surival
 y <- survival::Surv(data$Time_to_Event, data$dead)
 
-# Estimando as curvas de sobrevivência pelo Kaplan-Meier para diversas variáveis
-KMgender <- survival::survfit(y ~ Gender, data = data)
-KMDM <- survival::survfit(y ~ DM, data = data)
-KMhypert <- survival::survfit(y ~ hypert, data = data)
-KMheart <- survival::survfit(y ~ heart, data = data)
-KMneo <- survival::survfit(y ~ neoplasia, data = data)
-KMliver <- survival::survfit(y ~ liver, data = data)
-KMvascular <- survival::survfit(y ~ vascular, data = data)
-KMCOPD <- survival::survfit(y ~ COPD, data = data)
+#Kaplan-Meier plot
+survfit2(y ~ 1, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "Probabilidade de sobrevivência"
+  ) +
+  add_confidence_interval() +
+ add_risktable()
+
+```
+
+```{r}
+#Probabilidde de sobreviver pelo menos 1, 2, ..., 5 anos
+summary(survfit(y ~ 1, data = data), times = c(1,2,3,4,5))
+#ou
+#survfit(Surv(Time_to_Event, dead) ~ 1, data = data) %>% 
+#  gtsummary::tbl_survfit(
+#    times = c(1,2,3,4,5),
+#    label_header = "**survival (95% CI)**"
+# )
+
+#Mediana = 2.24 anos (2.15,2.33)
+survfit(Surv(Time_to_Event, dead) ~ 1, data = data)
+```
 
 
-# Gráfico das curvas de Kaplan-Meier
-par(mfrow = c(2, 2))
-#SEXO
-plot(KMgender, main = "Sexo", col = 1:2)
-legend (100, 0.2, c("F", "M"), col=1:2,lty=1)
-# DM
-plot(KMDM, main = "DM", col = 1:2)
-legend(100,0.2, c("Não", "Sim"), col=1:2, lty=1)
-# HIPERTENSAO
-plot(KMhypert, main = "Hipertensão", col = 1:2)
-legend (100, 0.2, c("Não", "Sim"), col=1:2, lty=1)
-# HEART
-plot(KMheart, main = "Coração", col = 1:3)
-legend (500, 1.1, c("Não", "Sim"), col=1:2, lty=1)
+```{r KMestrat}
 
-par(mfrow = c(2, 2))
+#Kaplan-Meier plot - estratificado
+#Sexo
+g1 <- survfit2(y ~ Gender, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "Sexo"
+  ) +
+ add_confidence_interval() 
+
+#DM
+g2 <- survfit2(y ~ DM, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "DM"
+  ) +
+ add_confidence_interval() 
+
+#Hipertensao
+g3 <- survfit2(y ~ hypert, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "HA"
+  ) +
+ add_confidence_interval() 
+
+#Coracao
+g4 <- survfit2(y ~ heart, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "D.coração"
+  ) +
+ add_confidence_interval() 
+
 #Neoplasia
-plot(KMneo, main = "Neolasia", col = 1:2)
-legend (100, 0.2, c("Não", "Sim"), col=1:2,lty=1)
-# Liver
-plot(KMliver, main = "Fígado", col = 1:2)
-legend(100,0.2, c("Não", "Sim"), col=1:2, lty=1)
-# Vascular
-plot(KMvascular, main = "Vascular", col = 1:2)
-legend (100, 0.2, c("Não", "Sim"), col=1:2, lty=1)
-# DPOC
-plot(KMheart, main = "DPOC", col = 1:3)
-legend (500, 1.1, c("Não", "Sim"), col=1:2, lty=1)
+g5<- survfit2(y ~ neoplasia, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "Neoplasia"
+  ) +
+ add_confidence_interval() 
+
+
+#Figado
+g6 <- survfit2(y ~ liver, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "D. hepática"
+  ) +
+ add_confidence_interval() 
+
+#Vascular
+g7 <- survfit2(y ~ vascular, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "D. vascular"
+  ) +
+ add_confidence_interval() 
+
+
+#DPOC
+g8 <- survfit2(y ~ COPD, data = data) %>% 
+  ggsurvfit() +
+  labs(
+    x = "Anos",
+    y = "S(t)",
+    title = "DPOC"
+  ) +
+ add_confidence_interval() 
+
+
+(g1 | g2) /
+(g3 | g4) 
+
+(g5 | g6) /
+(g7 | g8)  
+
+```
+
+
+```{r logrank}
+#Comparando grupos - Log-rank
+#Sexo
+survdiff(y ~ Gender, data = data)
+#Não há diferença 
+
+#DM
+survdiff(y ~ DM, data = data)
+#Diferença significativa p= 0.04
+
+#Hipertensao
+survdiff(y ~ hypert, data = data)
+#Diferença significativa p= <2e-16 
+
+#Coraçao
+survdiff(y ~ heart, data = data)
+#Não há diferença 
+
+#Neoplasia
+survdiff(y ~ neoplasia, data = data)
+#Não há diferença 
+
+#Figado
+survdiff(y ~ liver, data = data)
+##Diferença significativa p= 0.01
+
+#Vascular
+survdiff(y ~ vascular, data = data)
+#Não há diferença 
+
+#DPOC
+survdiff(y ~ COPD, data = data)
+#Diferença significativa p= 8e-04
+
+```
+
+
+```{r peto}
+#Comparando grupos - Log-rank
+#Sexo
+survdiff(y ~ Gender, data = data, rho=1)
+#Não há diferença 
+
+#DM
+survdiff(y ~ DM, data = data, rho=1)
+#Diferença significativa p= 0.04
+
+#Hipertensao
+survdiff(y ~ hypert, data = data, rho=1)
+#Diferença significativa p= <2e-16 
+
+#Coraçao
+survdiff(y ~ heart, data = data, rho=1)
+#Não há diferença 
+
+#Neoplasia
+survdiff(y ~ neoplasia, data = data, rho=1)
+#Não há diferença 
+
+#Figado
+survdiff(y ~ liver, data = data, rho=1)
+##Diferença significativa p= 0.01
+
+#Vascular
+survdiff(y ~ vascular, data = data, rho=1)
+#Não há diferença 
+
+#DPOC
+survdiff(y ~ COPD, data = data, rho=1)
+#Diferença significativa p= 8e-04
+
+```
+
+```{r}
+#modelagem parametrica
+survreg(formula= Surv(Time_to_Event +1, dead)~1, data=data,
+dist='exponential')
+
+survreg(formula= Surv(Time_to_Event +1, dead)~1, data=data,
+dist='weibull')
+
 
 
 ```
+
+
+
+```{r Cox_simples}
+#Sexo
+coxph(y ~ Gender, data = data) %>%
+tbl_regression(exp = TRUE) 
+#nao signifitiva
+
+#Idade
+coxph(y ~ idade, data = data) %>%
+tbl_regression(exp = TRUE) 
+#nao signifitiva
+
+
+#DM
+cox_dm <- coxph(y ~ DM, data = data) %>%
+tbl_regression(exp = TRUE) 
+#signifitiva
+
+#hipertensao
+coxph(y ~ hypert, data = data) %>%
+tbl_regression(exp = TRUE) 
+#signifitiva
+
+#Coracao
+coxph(y ~ heart, data = data) %>%
+tbl_regression(exp = TRUE) 
+#nao signifitiva
+
+#Neoplasia
+coxph(y ~ neoplasia, data = data) %>%
+tbl_regression(exp = TRUE) 
+#nao signifitiva
+
+#Figado
+coxph(y ~ liver, data = data) %>%
+tbl_regression(exp = TRUE) 
+#signifitiva
+
+#Vascular
+coxph(y ~ vascular, data = data) %>%
+tbl_regression(exp = TRUE) 
+#nao signifitiva
+
+#DPOC
+coxph(y ~ COPD, data = data) %>%
+tbl_regression(exp = TRUE) 
+#signifitiva
+
+#os modelos de Cox simples confirmam a analise grafica e teste log-rak e peto
+
+
+```
+
+```{r cox_multiplo}
+m1<- coxph(y ~ Gender + idade, data = data) 
+m2<- coxph(y ~ Gender + idade + DM, data = data) 
+m3<- coxph(y ~ Gender + idade + DM + hypert, data = data) 
+m4<- coxph(y ~ Gender + idade + DM + hypert + liver, data = data) 
+m5<- coxph(y ~ Gender + idade + DM + hypert + liver + COPD, data = data) 
+
+anova(m1,m2,m3,m4, m5)
+
+```
+
+
+```{r}
+
+m5 %>%
+tbl_regression(exp = TRUE) 
+
+```
+```{r}
+tbl_regression(c(cox_sexo, cox_dm), exponentiate = TRUE)
+```
+
 
