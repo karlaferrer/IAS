@@ -26,7 +26,7 @@ pacman::p_load(
   kableExtra,#renderizar tabela
   knitr, #renderizar tabela
   survival, #analise de sobrevivencia
-  lubridate,
+  survminer,#plotar graficos KM
   ggsurvfit,
   gtsummary, # tabela OR e IC 
   tidycmprsk, 
@@ -136,13 +136,13 @@ survfit2(y ~ 1, data = data) %>%
     y = "Probabilidade de sobrevivência"
   ) +
   add_confidence_interval() +
- add_risktable()
+  add_risktable() 
 
 ```
 
 ```{r}
-#Probabilidde de sobreviver pelo menos 1, 2, ..., 5 anos
-summary(survfit(y ~ 1, data = data), times = c(1,2,3,4,5))
+#Probabilidde de sobreviver pelo menos 1, 2, ..., 8 anos
+summary(survfit(y ~ 1, data = data), times = c(1:8))
 #ou
 #survfit(Surv(Time_to_Event, dead) ~ 1, data = data) %>% 
 #  gtsummary::tbl_survfit(
@@ -159,93 +159,56 @@ survfit(Surv(Time_to_Event, dead) ~ 1, data = data)
 
 #Kaplan-Meier plot - estratificado
 #Sexo
-g1 <- survfit2(y ~ Gender, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "Sexo"
-  ) +
- add_confidence_interval() 
+
+splots <- list()
+splots[[1]] <- ggsurvplot(survfit(y ~ Gender, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("F", "M"), legend.title="Sexo",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
 
 #DM
-g2 <- survfit2(y ~ DM, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "DM"
-  ) +
- add_confidence_interval() 
+splots[[2]] <- ggsurvplot(survfit(y ~ DM, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("Não", "Sim"), legend.title="Diabetes mellitus",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
 
 #Hipertensao
-g3 <- survfit2(y ~ hypert, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "HA"
-  ) +
- add_confidence_interval() 
-
+splots[[3]] <- ggsurvplot(survfit(y ~ hypert, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("Não", "Sim"), legend.title="Hipertensão",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
 #Coracao
-g4 <- survfit2(y ~ heart, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "D.coração"
-  ) +
- add_confidence_interval() 
+splots[[4]] <- ggsurvplot(survfit(y ~ heart, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("Não", "Sim"), legend.title="Doença coração",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
 
 #Neoplasia
-g5<- survfit2(y ~ neoplasia, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "Neoplasia"
-  ) +
- add_confidence_interval() 
-
-
+splots[[5]] <- ggsurvplot(survfit(y ~ neoplasia, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("Não", "Sim"), legend.title="Neoplasia",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
+ 
 #Figado
-g6 <- survfit2(y ~ liver, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "D. hepática"
-  ) +
- add_confidence_interval() 
+splots[[6]] <- ggsurvplot(survfit(y ~ liver, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("Não", "Sim"), legend.title="Doença hepática",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
 
 #Vascular
-g7 <- survfit2(y ~ vascular, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "D. vascular"
-  ) +
- add_confidence_interval() 
-
+splots[[7]] <- ggsurvplot(survfit(y ~ vascular, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("Não", "Sim"), legend.title=" Doença vascular",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
 
 #DPOC
-g8 <- survfit2(y ~ COPD, data = data) %>% 
-  ggsurvfit() +
-  labs(
-    x = "Anos",
-    y = "S(t)",
-    title = "DPOC"
-  ) +
- add_confidence_interval() 
+splots[[8]] <- ggsurvplot(survfit(y ~ COPD, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
+           legend.labs=c("Não", "Sim"), legend.title=" DPOC",  
+           ggtheme = theme_minimal(),
+           xlab = "Anos", ylab = "S(t)") 
 
-
-(g1 | g2) /
-(g3 | g4) 
-
-(g5 | g6) /
-(g7 | g8)  
+# Arrange multiple ggsurvplots and print the output
+arrange_ggsurvplots(splots, print = TRUE, ncol = 1, nrow = 1)
 
 ```
 
@@ -323,21 +286,12 @@ survdiff(y ~ COPD, data = data, rho=1)
 
 ```
 
-```{r}
-#modelagem parametrica
-survreg(formula= Surv(Time_to_Event +1, dead)~1, data=data,
-dist='exponential')
-
-survreg(formula= Surv(Time_to_Event +1, dead)~1, data=data,
-dist='weibull')
-
-
-
-```
-
-
 
 ```{r Cox_simples}
+
+#Efeito isolado de cada covariavel sobre o tempo de sobrevivencia
+#significancia p < 0.2
+
 #Sexo
 coxph(y ~ Gender, data = data) %>%
 tbl_regression(exp = TRUE) 
@@ -377,7 +331,7 @@ tbl_regression(exp = TRUE)
 #Vascular
 coxph(y ~ vascular, data = data) %>%
 tbl_regression(exp = TRUE) 
-#nao signifitiva
+#signifitiva p < 0.122
 
 #DPOC
 coxph(y ~ COPD, data = data) %>%
@@ -386,29 +340,62 @@ tbl_regression(exp = TRUE)
 
 #os modelos de Cox simples confirmam a analise grafica e teste log-rak e peto
 
-
 ```
 
-```{r cox_multiplo}
-m1<- coxph(y ~ Gender + idade, data = data) 
-m2<- coxph(y ~ Gender + idade + DM, data = data) 
-m3<- coxph(y ~ Gender + idade + DM + hypert, data = data) 
-m4<- coxph(y ~ Gender + idade + DM + hypert + liver, data = data) 
-m5<- coxph(y ~ Gender + idade + DM + hypert + liver + COPD, data = data) 
 
-anova(m1,m2,m3,m4, m5)
+```{r cox_multiplo}
+#Efeitos ajustados das covariaveis sobre o tempo de sobrevivencia
+
+
+m1<- coxph(y ~ Gender + idade, x= TRUE, data = data) 
+m2<- coxph(y ~ Gender + idade + DM, x= TRUE, data = data) 
+m3<- coxph(y ~ Gender + idade + DM + hypert, x= TRUE, data = data) 
+m4<- coxph(y ~ Gender + idade + DM + hypert + liver, x= TRUE, data = data)
+m5<- coxph(y ~ Gender + idade + DM + hypert + liver + vascular, x= TRUE, 
+           data = data)
+m6<- coxph(y ~ Gender + idade + DM + hypert + liver + vascular + COPD, 
+           x= TRUE, data = data) 
+
+anova(m1, m2, m3, m4, m5, m6)
+
+summary(m6)
 
 ```
 
 
 ```{r}
+#Resultados do modelo ajustado
 
-m5 %>%
+m6 %>%
 tbl_regression(exp = TRUE) 
 
 ```
+
 ```{r}
-tbl_regression(c(cox_sexo, cox_dm), exponentiate = TRUE)
+#Indice prognostico
+
+source("Rfun.r")
+par(mfrow = c(2,2))
+plot.pi(m3, main = "Modelo 3" )
+plot.pi(m4, main = "Modelo 4" )
+plot.pi(m5, main = "Modelo 5" )
+plot.pi(m6, main = "Modelo 6" )
+
+```
+```{r}
+#Analise de residuos
+
+#Proporcionalidade
+res <- cox.zph(m6)
+plot(res, xlab = "Anos", resid= FALSE)
+
+m6.sch <- cox.zph(m6)
+m6.sch
+#log-linearidade
+#pontos atípicos e influentes
+
+ggcoxzph(res)
+
 ```
 
 
