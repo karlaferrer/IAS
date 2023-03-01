@@ -67,7 +67,7 @@ data<-subset(data,dialysis == 1 )
 ```
 
 ```{r tab1,include=FALSE, message=FALSE, warning=FALSE}
-#Análise exploratória
+#2. Análise exploratória
 # Tabela 1
 
 #normalidade - idade
@@ -122,6 +122,7 @@ footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
 
 
 ```{r KMglobal}
+#3. Estimacao nao parametrica - Kaplan-Meier global
 #Status nao pode ser fator!
 data$dead<-as.numeric(data$dead)
 
@@ -141,6 +142,8 @@ survfit2(y ~ 1, data = data) %>%
 ```
 
 ```{r}
+#3.1 Mediana
+
 #Probabilidde de sobreviver pelo menos 1, 2, ..., 8 anos
 summary(survfit(y ~ 1, data = data), times = c(1:8))
 #ou
@@ -156,7 +159,7 @@ survfit(Surv(Time_to_Event, dead) ~ 1, data = data)
 
 
 ```{r KMestrat}
-
+#4. Estimacao nao parametrica - Kaplan-Meier com estratificacao
 #Kaplan-Meier plot - estratificado
 #Sexo
 
@@ -214,7 +217,7 @@ arrange_ggsurvplots(splots, print = TRUE, ncol = 1, nrow = 1)
 
 
 ```{r logrank}
-#Comparando grupos - Log-rank
+#4.1 Comparando grupos - Log-rank
 #Sexo
 survdiff(y ~ Gender, data = data)
 #Não há diferença 
@@ -251,7 +254,8 @@ survdiff(y ~ COPD, data = data)
 
 
 ```{r peto}
-#Comparando grupos - Log-rank
+#4.2 Comparando grupos - Peto
+#maior peso no incio do seguimento
 #Sexo
 survdiff(y ~ Gender, data = data, rho=1)
 #Não há diferença 
@@ -288,7 +292,7 @@ survdiff(y ~ COPD, data = data, rho=1)
 
 
 ```{r Cox_simples}
-
+#5. Modelos semi-parametricos simples - Cox
 #Efeito isolado de cada covariavel sobre o tempo de sobrevivencia
 #significancia p < 0.2
 
@@ -344,6 +348,7 @@ tbl_regression(exp = TRUE)
 
 
 ```{r cox_multiplo}
+#6. Modelo semi-parametrico multiplo - Cox
 #Efeitos ajustados das covariaveis sobre o tempo de sobrevivencia
 
 
@@ -364,7 +369,7 @@ summary(m6)
 
 
 ```{r}
-#Resultados do modelo ajustado
+#6.1 Resultados do modelo ajustado
 
 m6 %>%
 tbl_regression(exp = TRUE) 
@@ -372,10 +377,10 @@ tbl_regression(exp = TRUE)
 ```
 
 ```{r}
-#Indice prognostico
+#6.2 Indice prognostico
 
 source("Rfun.r")
-par(mfrow = c(2,2))
+#par(mfrow = c(2,2))
 plot.pi(m3, main = "Modelo 3" )
 plot.pi(m4, main = "Modelo 4" )
 plot.pi(m5, main = "Modelo 5" )
@@ -383,18 +388,48 @@ plot.pi(m6, main = "Modelo 6" )
 
 ```
 ```{r}
-#Analise de residuos
+#7. Analise de residuos
 
-#Proporcionalidade
+#Proporcionalidade - Shoenfeld
 res <- cox.zph(m6)
-plot(res, xlab = "Anos", resid= FALSE)
+plot(res, xlab = "Anos", lwd=1, col= "grey")
 
-m6.sch <- cox.zph(m6)
-m6.sch
-#log-linearidade
-#pontos atípicos e influentes
+#outra opcao grafica
+ggcoxzph(res, font.x = 10, font.y=10, main = "")
 
-ggcoxzph(res)
+#log-linearidade - Martingale
+
+# Analisando a forma funcional através do gráfico dos resíduos de Martingale x idade
+#grafico do residuo Martingale no modelo nulo x idade
+
+mod0 <- coxph(y ~ 1, data = data, x = T)
+summary(mod0)
+mod0.mar <- resid(mod0, type= 'martingale')
+plot (data$idade, mod0.mar, xlab = "Idade", ylab = "Resíduos martingale",
+main= "Avaliação da
+forma funcional da Idade", lwd=1, col= "grey" )
+lines(lowess(data$idade, res.mart, iter = 0), lty = 2)
+#Não há associação entre o tempo de sobrevivência e a idade, uma vez que não há 
+#tendência linear e o lowess está em torno do zero.
+
+# atípicos - Residuos deviance
+res.dev <-resid(m6, type = "deviance")
+plot(res.dev, col= "grey", ylab = "Resíduos deviance", xlab = "Índice")
+abline(h=0, col="red")
+
+#Verifica-se grande quantidade de observacoes atipicas - 6.3%
+(sum(res.dev  > 2) + sum(res.dev  < (-2)))/length(data$ID)
+
+#influentes - Residuos escore
+res.esc <- resid(m6, type= 'dfbetas')
+par(mfrow = c(1,2))
+plot (data$Gender , res.esc[,1],xlab = "Sexo", ylab = "Resíduos escore")
+plot (data$idade , res.esc[,2],xlab = "Idade", ylab = "Resíduos escore")
+plot (data$DM , res.esc[,3],xlab = "DM", ylab = "Resíduos escore")
+plot (data$hypert , res.esc[,4],xlab = "Hipertensão", ylab = "Resíduos escore")
+plot (data$liver , res.esc[,5],xlab = "D. hepática", ylab = "Resíduos escore")
+plot (data$vascular , res.esc[,6],xlab = "D. vascular", ylab = "Resíduos escore")
+plot (data$COPD , res.esc[,7],xlab = "DPOC", ylab = "Resíduos escore")
 
 ```
 
