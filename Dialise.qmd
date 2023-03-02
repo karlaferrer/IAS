@@ -64,6 +64,7 @@ str(data)
 data<-subset(data,dialysis == 1 )
 
 
+
 ```
 
 ```{r tab1,include=FALSE, message=FALSE, warning=FALSE}
@@ -104,7 +105,6 @@ colnames(tabela1)<-c("Característica","", "Não óbito", "Óbito")
 rownames(tabela1) <- NULL
 ```
 
-
 ```{r Tabela1}
 #| label: tbl-Tabela1
 #| tbl-cap: "Características da coorte de idosos que iniciaram hemodiálise entre 2002 e 2009, segundo status (óbito)."
@@ -120,14 +120,15 @@ footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
 
 \newpage
 
+**Estimacao não paramétrica - Kaplan-Meier global**
 
-```{r KMglobal}
+```{r KMglobal, include=TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 #3. Estimacao nao parametrica - Kaplan-Meier global
 #Status nao pode ser fator!
 data$dead<-as.numeric(data$dead)
 
 #Objeto surival
-y <- survival::Surv(data$Time_to_Event, data$dead)
+y <- survival::Surv(data$Time_to_Event*12, data$dead)
 
 #Kaplan-Meier plot
 survfit2(y ~ 1, data = data) %>% 
@@ -141,7 +142,7 @@ survfit2(y ~ 1, data = data) %>%
 
 ```
 
-```{r}
+```{r mediana, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #3.1 Mediana
 
 #Probabilidde de sobreviver pelo menos 1, 2, ..., 8 anos
@@ -157,8 +158,11 @@ summary(survfit(y ~ 1, data = data), times = c(1:8))
 survfit(Surv(Time_to_Event, dead) ~ 1, data = data)
 ```
 
+\newpage
 
-```{r KMestrat}
+**Estimacao nao parametrica - Kaplan-Meier com estratificacao**
+
+```{r KMestrat, include= TRUE, echo = FALSE, message=FALSE, warning=FALSE }
 #4. Estimacao nao parametrica - Kaplan-Meier com estratificacao
 #Kaplan-Meier plot - estratificado
 #Sexo
@@ -215,8 +219,7 @@ arrange_ggsurvplots(splots, print = TRUE, ncol = 1, nrow = 1)
 
 ```
 
-
-```{r logrank}
+```{r logrank, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #4.1 Comparando grupos - Log-rank
 #Sexo
 survdiff(y ~ Gender, data = data)
@@ -252,8 +255,7 @@ survdiff(y ~ COPD, data = data)
 
 ```
 
-
-```{r peto}
+```{r peto, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #4.2 Comparando grupos - Peto
 #maior peso no incio do seguimento
 #Sexo
@@ -290,8 +292,7 @@ survdiff(y ~ COPD, data = data, rho=1)
 
 ```
 
-
-```{r Cox_simples}
+```{r Cox_simples, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #5. Modelos semi-parametricos simples - Cox
 #Efeito isolado de cada covariavel sobre o tempo de sobrevivencia
 #significancia p < 0.2
@@ -346,8 +347,11 @@ tbl_regression(exp = TRUE)
 
 ```
 
+\newpage
 
-```{r cox_multiplo}
+**Modelo semi-parametrico multiplo - Cox**
+
+```{r cox_multiplo, include= TRUE, echo = TRUE, message=FALSE, warning=FALSE}
 #6. Modelo semi-parametrico multiplo - Cox
 #Efeitos ajustados das covariaveis sobre o tempo de sobrevivencia
 
@@ -366,9 +370,11 @@ anova(m1, m2, m3, m4, m5, m6)
 summary(m6)
 
 ```
+\newpage
 
+**Resultados do modelo ajustado**
 
-```{r}
+```{r res_mult, include= TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 #6.1 Resultados do modelo ajustado
 
 m6 %>%
@@ -376,7 +382,7 @@ tbl_regression(exp = TRUE)
 
 ```
 
-```{r}
+```{r prognostico, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #6.2 Indice prognostico
 
 source("Rfun.r")
@@ -387,15 +393,30 @@ plot.pi(m5, main = "Modelo 5" )
 plot.pi(m6, main = "Modelo 6" )
 
 ```
-```{r}
-#7. Analise de residuos
+\newpage
+
+**Analise de Residuos**
+
+```{r shoenfeld, include= TRUE, echo = FALSE, message=FALSE, warning=FALSE}
+#7.1 Analise de residuos
 
 #Proporcionalidade - Shoenfeld
-res <- cox.zph(m6)
-plot(res, xlab = "Anos", lwd=1, col= "grey")
+res.sho <- cox.zph(m6)
+plot(res.sho, xlab = "Anos", col= c("red", "blue"))
+abline(h=0, col="grey")
+
+plot(res.sho, xlab = "Anos", col= c("red", "blue"), resid = FALSE)
+abline(h=0, col="grey")
+
+res.sho
 
 #outra opcao grafica
-ggcoxzph(res, font.x = 10, font.y=10, main = "")
+#ggcoxzph(res, font.x = 10, font.y=10, main = "")
+#Ref http://www.sthda.com/english/wiki/cox-model-assumptions
+
+```
+
+```{r martingale, include= TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 
 #log-linearidade - Martingale
 
@@ -408,9 +429,17 @@ mod0.mar <- resid(mod0, type= 'martingale')
 plot (data$idade, mod0.mar, xlab = "Idade", ylab = "Resíduos martingale",
 main= "Avaliação da
 forma funcional da Idade", lwd=1, col= "grey" )
-lines(lowess(data$idade, res.mart, iter = 0), lty = 2)
+lines(lowess(data$idade, mod0.mar, iter = 0), lty = 2)
 #Não há associação entre o tempo de sobrevivência e a idade, uma vez que não há 
 #tendência linear e o lowess está em torno do zero.
+
+#outra forma
+ggcoxfunctional(Surv(Time_to_Event, dead) ~ idade, data = data,
+                ggtheme = theme_minimal())
+
+```
+
+```{r rdeviance, include= TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 
 # atípicos - Residuos deviance
 res.dev <-resid(m6, type = "deviance")
@@ -418,8 +447,18 @@ plot(res.dev, col= "grey", ylab = "Resíduos deviance", xlab = "Índice")
 abline(h=0, col="red")
 
 #Verifica-se grande quantidade de observacoes atipicas - 6.3%
-(sum(res.dev  > 2) + sum(res.dev  < (-2)))/length(data$ID)
+#(sum(res.dev  > 2) + sum(res.dev  < (-2)))/length(data$ID)
 
+#outra forma
+ggcoxdiagnostics(m6, type = "deviance",
+                 linear.predictions = FALSE, sline = FALSE, ggtheme = theme_minimal(),
+                 ylab = "Resíduos deviance",
+                 xlab = "Índice"
+                 )
+
+```
+
+```{r rescore, include= TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 #influentes - Residuos escore
 res.esc <- resid(m6, type= 'dfbetas')
 par(mfrow = c(1,2))
@@ -431,6 +470,46 @@ plot (data$liver , res.esc[,5],xlab = "D. hepática", ylab = "Resíduos escore")
 plot (data$vascular , res.esc[,6],xlab = "D. vascular", ylab = "Resíduos escore")
 plot (data$COPD , res.esc[,7],xlab = "DPOC", ylab = "Resíduos escore")
 
-```
+#outra forma 
+ggcoxdiagnostics(m6, type = "dfbeta",
+                 linear.predictions = FALSE,
+                 sline = FALSE,
+                 ylab = "Resíduos dfbeta",
+                 xlab = "Índice",
+                 ggtheme = theme_minimal())
 
+```
+```{r mod_7}
+#constatada a nao proporcionalidade para hipertensao
+#o modelo sera estratificado por essa variavel
+
+m7<- coxph(y ~ Gender + idade + DM + hypert + liver + vascular + COPD 
+           + strata (hypert), 
+           x= TRUE, data = data) 
+
+summary(m7)
+
+#plot.pi(m7, main = "Modelo 7" )
+#o indice prognistico nao funciona aqui
+
+```
+```{r}
+
+#7.1 Analise de residuos
+
+#Proporcionalidade - Shoenfeld
+res.sho <- cox.zph(m7)
+plot(res.sho, xlab = "Anos", col= c("red", "blue"))
+abline(h=0, col="grey")
+
+plot(res.sho, xlab = "Anos", col= c("red", "blue"), resid = FALSE)
+abline(h=0, col="grey")
+
+res.sho
+
+#outra opcao grafica
+ggcoxzph(res.sho, font.x = 10, font.y=10, main = "")
+#Ref http://www.sthda.com/english/wiki/cox-model-assumptions
+
+```
 
