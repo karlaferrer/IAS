@@ -1,5 +1,5 @@
 ---
-title: "Análise de sobrevivência de idosos portadores de doença renal crônica em hemodiálise: estudo restrospectivo com dados do Registro de Diálise e Transplante Austríaco"
+title: " Fatores prognósicos para a sobrevivência pacientes idosos em hemodiálise na Áustria"
 author: "**Karla de Araujo Ferreira**"
 lang: pt
 format:
@@ -61,9 +61,7 @@ data$idade<-round(data$age10*10,0)
 str(data)
 
 #Apenas pacientes em dialise
-data<-subset(data,dialysis == 1 )
-
-
+data<-subset(data,dialysis == 1)
 
 ```
 
@@ -512,4 +510,39 @@ ggcoxzph(res.sho, font.x = 10, font.y=10, main = "")
 #Ref http://www.sthda.com/english/wiki/cox-model-assumptions
 
 ```
+
+**1. Introdução**
+
+Descrever sucintamente o problema analisado, objetivo e as vari aveis escolhidas para a
+analise.
+
+A doença renal crônica evolui com a idade. 
+Definição de estágio final da DRC
+A entrada na diálise e o tempo de sobrevivência
+
+Os estudos co pacientes idosos em terapia renal substitutiva devem levar em consideração a expectativa de vida restante do paciente, que usualmente é limitado pela presença de comorbidades, como diabetes, hipertensão, doença vascular, doença do coração etc. O objetivo desse trabalho foi investigar o efeito das comorbidades sobre o tempo de sobrevivência de pacientes com doença renal crônica em estágio 5 que iniciaram hemodiálise a partir dos 65 anos de idade com base em dados de sistema de informação sobre diálise e transplante austríaco.  
+
+**2. Métodos**
+
+Os dados analisados neste trabalho são provenientes de um estudo austríaco publicado na Revista PLoS ONE em 2017 intitulado "*Survival analysis of conservative vs. dialysis
+treatment of elderly patients with CKD stage 5* e encontram-se disponíveis na página eletrônica da revista [ artigo; dados]. Esses dados foram originalmente obtidos a partir do registro de diálise e transplante austríaco - *Austrian Dialysis and Transplant Registry (OEDTR) - que identificou 8.622 pacientes incidentes de hemodiálise com idade igual o superior a 65 anos no período de janeiro de 2002 a dezembro de 2009.
+
+O desfecho no estudo é o tempo em meses desde o início da hemodiálise até o óbito. As covariáveis analisadas se referem às comorbidades dos pacientes são: Diabetes mellitus (DM), hipertensão arterial (HA), doença do coração, neoplasia, doença hepática, doença vascular e doença pulmonar obstrutiva crônica (DPOC). Tratam-se todas de variáveis dicotômicas, ou seja, estão presentes ou ausentes (sim e não) e não tempo-dependentes. Também foram analisados os efeitos da idade e do sexo sobre o tempo de sobrevivência.
+
+Para estimar o efeito dessas covariáveis sobre o tempo de sobrevivência dos idosos em hemodiálise, foi ajustado um modelo de risco proporcionais de Cox que é definido como um modelo semiparamétrico, pois assume uma forma paramétrica para o efeito das covariáveis e uma não paramétrica para a função de risco basal [marilia].
+
+Incialmente  as covariáveis foram analisadas quanto à distribuição das frequências absolutas e relativas segundo o evento de interesse, óbito. Utilizou-se modelo não paramétrico de Kaplan-Meier para avaliar a sobrevida global dos pacientes e a sobrevida de acordo com a presença de cada comorbidade.  Essa análise incial permitiu explorar o efeito das covariáveis sobre o tempo de sobrevivência em hemodiálise, bem como avaliar de modo preliminar a premissa de proporcionalidade dos riscos do modelo de Cox.
+
+O processo de modelagem foi realizado basicamente em três etapas descritas a seguir:
+
+1. Obtenção das estimativas dos efeitos brutos de cada covariável sobre o tempo de sobrevivência dos pacientes com modelos de Cox simples. As variáveis candidatas ao modelo múltiplo foram aquelas que apresentaram significância ao nível de 1% (valor-p \<0,1), no teste de Wald para os coeficientes desses modelos.
+
+2. O modelo de regressão de Cox foi elaborado comparando-se modelos aninhados com teste da razão de verossimilhança para verificar se a inclusão de uma ou mais covariáveis aumentavam de modo significativo a verossimilhança de um modelo em relação ao anterior, com menos variáveis (Anova tipo I). O nível de significância adototado foi de 5% (valor-p \<0,5). No primeiro modelo foram incluídas conjuntamente sexo e idade e em seguida nos demais, cada uma das comorbidades na seguinte ordem: Não foi verificado o efeito da interação de covariáveis.
+
+3.  A qualidade de ajuste do modelo final foi avaliada segundo o teste Hosmer e Lemeshow e gráfico correspondente(11). Nesse teste, p-valores maiores que 0,05 indicam uma boa qualidade de ajuste do modelo. A avaliação dos pressupostos de lineariaride e independência foi realizada mediante disposição gráfica dos resíduos deviance.
+
+
+
+
+
 
