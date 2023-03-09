@@ -10,9 +10,51 @@ csl: epidemiology.csl
 bibliography: references.bib
 ---
 
-**Programa de Pós-Graduação Stricto-Sensu em Epidemiologia em Saúde Pública, Escola Nacional de Saúde Pública Sergio Arouca, Fundação Oswaldo Cruz. Rio de Janeiro, fevereiro de 2023.**
+```{r setup, include=FALSE}
+# Chunk options
+knitr::opts_chunk$set(
+ fig.width = 6,
+ fig.asp = 0.8,
+ out.width = "80%"
+)
+```
+
 
 **Disciplina: Introdução à Análise de Sobrevivência - 2023**
+
+**Programa de Pós-Graduação Stricto-Sensu em Epidemiologia em Saúde Pública, Escola Nacional de Saúde Pública Sergio Arouca, Fundação Oswaldo Cruz. Rio de Janeiro, fevereiro de 2023.**
+
+**1. Introdução**
+
+Descrever sucintamente o problema analisado, objetivo e as vari aveis escolhidas para a
+analise.
+
+A doença renal crônica evolui com a idade. 
+Definição de estágio final da DRC
+A entrada na diálise e o tempo de sobrevivência
+
+Os estudos com pacientes idosos em terapia renal substitutiva devem levar em consideração a expectativa de vida restante do paciente, que usualmente é limitado pela presença de comorbidades, como diabetes, hipertensão, doença vascular, doença do coração etc. O objetivo desse trabalho foi investigar o efeito das comorbidades sobre o tempo de sobrevivência de pacientes com doença renal crônica em estágio 5 que iniciaram hemodiálise a partir dos 65 anos de idade com base em dados de sistema de informação sobre diálise e transplante austríaco.  
+
+**2. Métodos**
+
+Os dados analisados neste trabalho são provenientes de um estudo austríaco publicado na Revista PLoS ONE em 2017 intitulado "*Survival analysis of conservative vs. dialysis
+treatment of elderly patients with CKD stage 5* e encontram-se disponíveis na página eletrônica da revista [ artigo; dados]. Esses dados foram originalmente obtidos a partir do registro de diálise e transplante austríaco - *Austrian Dialysis and Transplant Registry (OEDTR) - que identificou 8.622 pacientes incidentes de hemodiálise com idade igual o superior a 65 anos no período de janeiro de 2002 a dezembro de 2009.
+
+O desfecho no estudo é o tempo em meses desde o início da hemodiálise até o óbito. As covariáveis analisadas se referem às comorbidades dos pacientes são: Diabetes mellitus (DM), hipertensão arterial (HA), doença do coração, neoplasia, doença hepática, doença vascular e doença pulmonar obstrutiva crônica (DPOC). Tratam-se todas de variáveis dicotômicas, ou seja, estão presentes ou ausentes (sim e não) e não tempo-dependentes. Também foram analisados os efeitos da idade e do sexo sobre o tempo de sobrevivência.
+
+Para estimar o efeito dessas covariáveis sobre o tempo de sobrevivência dos idosos em hemodiálise, foi ajustado um modelo de risco proporcionais de Cox que é definido como um modelo semiparamétrico, pois assume uma forma paramétrica para o efeito das covariáveis e uma não paramétrica para a função de risco basal [marilia].
+
+Incialmente  as covariáveis foram analisadas quanto à distribuição das frequências absolutas e relativas segundo o evento de interesse, óbito. Utilizou-se modelo não paramétrico de Kaplan-Meier para avaliar a sobrevida global dos pacientes e a sobrevida de acordo com a presença de cada comorbidade. O teste de log-rank ou Mantel Haenzel foi empregado para compraração formal das curvas adotando-se nível de significância de 5%. Essa análise inicial permite explorar o efeito das covariáveis sobre o tempo de sobrevivência em hemodiálise, bem como avaliar de modo preliminar a premissa de proporcionalidade dos riscos do modelo de Cox.
+
+O processo de modelagem foi realizado basicamente em quatro etapas. Em primeiro lugar, foram obtidas as estimativas dos efeitos brutos de cada covariável sobre o tempo de sobrevivência dos pacientes com modelos de Cox simples. As variáveis candidatas ao modelo múltiplo foram aquelas que apresentaram significância ao nível de 1% (valor-p \<0,1), no teste de Wald para os coeficientes desses modelos.
+
+Em seguida, o modelo de regressão de Cox foi elaborado comparando-se modelos aninhados com teste da razão de verossimilhança para verificar se a inclusão de uma ou mais covariáveis aumentavam de modo significativo a verossimilhança de um modelo em relação ao anterior, com menos variáveis (Anova tipo I). O nível de significância adototado foi de 5% (valor-p \<0,5). No primeiro modelo foram incluídas conjuntamente sexo e idade e nos subsequentes, cada uma das comorbidades que tiveram efeito signficativo nos modelos simples, uma a uma, sem ordem de importância definida por referencial teórico.
+
+A qualidade de ajuste do modelo final foi avaliada segundo a estimativa da probabilidade de concordância estimada pelo modelo de Cox que é considerada comum em estudos de sobrevivência se o valor estiver entre 0,6 e 0,7 [ref livro]. De forma complementar foram elaborados gráficos de sobrevivência estratificados por índice prognóstico para análise do poder discriminatório do modelo.
+
+Por fim, realizou-se análise gráfica dos resíduos de Schoenfeld para avaliar o pressuposto de proporcionalidde dos riscos de cada covariável do modelo de Cox. A forma funcional da covariável quantitativa foi avaliada segundo gráfico dos resíduos Martingale do modelo nulo versus idade. Por fim, a presença de observações atípicas e influentes foi verificante mediante disposição gráfica dos resíduos *deviance* e escore respectivamente.
+
+O principal pacote do software R v.4.1.2 ([http://www.r-project.org](http://www.r-project.org/)) utilizado neste trabalho foi o *survival*.
 
 \newpage
 
@@ -22,6 +64,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
   here, #caminho do projeto
   readxl, #ler arquivo excel
+  descr, #analise descritiva
   tableone, #fazer tabela 1
   kableExtra,#renderizar tabela
   knitr, #renderizar tabela
@@ -42,6 +85,7 @@ pacman::p_load(
 
 ```
 
+
 ```{r banco, include=FALSE, message=FALSE, warning=FALSE}
 # 0. Leitura do banco de dados
 
@@ -57,6 +101,7 @@ str(data)
 #transformar covariaveis em fator e idade em valor 
 data<-cbind(lapply(data[,1:10],as.factor), (data[,11:13]))
 data$idade<-round(data$age10*10,0)
+data$tempo<-data$Time_to_Event*12
 
 str(data)
 
@@ -67,6 +112,10 @@ data<-subset(data,dialysis == 1)
 
 ```{r tab1,include=FALSE, message=FALSE, warning=FALSE}
 #2. Análise exploratória
+
+descr::freq(data$Gender) #frequencia por sexo
+summary(data$idade) # descritiva idade
+
 # Tabela 1
 
 #normalidade - idade
@@ -103,22 +152,6 @@ colnames(tabela1)<-c("Característica","", "Não óbito", "Óbito")
 rownames(tabela1) <- NULL
 ```
 
-```{r Tabela1}
-#| label: tbl-Tabela1
-#| tbl-cap: "Características da coorte de idosos que iniciaram hemodiálise entre 2002 e 2009, segundo status (óbito)."
-#| warning: false
-#| echo: false
-#| message: false
-
-kbl(tabela1, align = "lcccc") %>%
-kable_classic(full_width = F) %>%
-footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
-)
-```
-
-\newpage
-
-**Estimacao não paramétrica - Kaplan-Meier global**
 
 ```{r KMglobal, include=TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 #3. Estimacao nao parametrica - Kaplan-Meier global
@@ -126,13 +159,13 @@ footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
 data$dead<-as.numeric(data$dead)
 
 #Objeto surival
-y <- survival::Surv(data$Time_to_Event*12, data$dead)
+y <- survival::Surv(data$tempo, data$dead)
 
 #Kaplan-Meier plot
-survfit2(y ~ 1, data = data) %>% 
+plot1<- survfit2(y ~ 1, data = data) %>% 
   ggsurvfit() +
   labs(
-    x = "Anos",
+    x = "Meses",
     y = "Probabilidade de sobrevivência"
   ) +
   add_confidence_interval() +
@@ -140,10 +173,11 @@ survfit2(y ~ 1, data = data) %>%
 
 ```
 
+
 ```{r mediana, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #3.1 Mediana
 
-#Probabilidde de sobreviver pelo menos 1, 2, ..., 8 anos
+#Probabilidde de sobreviver pelo menos 1, 2, ..., 8 meses
 summary(survfit(y ~ 1, data = data), times = c(1:8))
 #ou
 #survfit(Surv(Time_to_Event, dead) ~ 1, data = data) %>% 
@@ -153,12 +187,11 @@ summary(survfit(y ~ 1, data = data), times = c(1:8))
 # )
 
 #Mediana = 2.24 anos (2.15,2.33)
-survfit(Surv(Time_to_Event, dead) ~ 1, data = data)
+survfit(Surv(tempo, dead) ~ 1, data = data)
 ```
 
 \newpage
 
-**Estimacao nao parametrica - Kaplan-Meier com estratificacao**
 
 ```{r KMestrat, include= TRUE, echo = FALSE, message=FALSE, warning=FALSE }
 #4. Estimacao nao parametrica - Kaplan-Meier com estratificacao
@@ -169,51 +202,51 @@ splots <- list()
 splots[[1]] <- ggsurvplot(survfit(y ~ Gender, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
            legend.labs=c("F", "M"), legend.title="Sexo",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
 
 #DM
 splots[[2]] <- ggsurvplot(survfit(y ~ DM, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
            legend.labs=c("Não", "Sim"), legend.title="Diabetes mellitus",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
 
 #Hipertensao
 splots[[3]] <- ggsurvplot(survfit(y ~ hypert, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
            legend.labs=c("Não", "Sim"), legend.title="Hipertensão",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
 #Coracao
 splots[[4]] <- ggsurvplot(survfit(y ~ heart, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
            legend.labs=c("Não", "Sim"), legend.title="Doença coração",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
 
 #Neoplasia
 splots[[5]] <- ggsurvplot(survfit(y ~ neoplasia, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
            legend.labs=c("Não", "Sim"), legend.title="Neoplasia",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
  
 #Figado
 splots[[6]] <- ggsurvplot(survfit(y ~ liver, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
            legend.labs=c("Não", "Sim"), legend.title="Doença hepática",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
 
 #Vascular
 splots[[7]] <- ggsurvplot(survfit(y ~ vascular, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
-           legend.labs=c("Não", "Sim"), legend.title=" Doença vascular",  
+           legend.labs=c("Não", "Sim"), legend.title="Doença vascular",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
 
 #DPOC
 splots[[8]] <- ggsurvplot(survfit(y ~ COPD, data = data), data = data,conf.int=F, pval=TRUE, risk.table= FALSE, 
-           legend.labs=c("Não", "Sim"), legend.title=" DPOC",  
+           legend.labs=c("Não", "Sim"), legend.title="DPOC",  
            ggtheme = theme_minimal(),
-           xlab = "Anos", ylab = "S(t)") 
+           xlab = "Meses", ylab = "S(t)") 
 
 # Arrange multiple ggsurvplots and print the output
-arrange_ggsurvplots(splots, print = TRUE, ncol = 1, nrow = 1)
+plot2 <- arrange_ggsurvplots(splots, print = TRUE, ncol = 2, nrow = 4)
 
 ```
 
@@ -511,38 +544,42 @@ ggcoxzph(res.sho, font.x = 10, font.y=10, main = "")
 
 ```
 
-**1. Introdução**
 
-Descrever sucintamente o problema analisado, objetivo e as vari aveis escolhidas para a
-analise.
+**3. Resultados**
 
-A doença renal crônica evolui com a idade. 
-Definição de estágio final da DRC
-A entrada na diálise e o tempo de sobrevivência
+Dos `r nrow(data)` pacientes que entraram em hemodiálise no período de 2002 a 2009 segundo registros austríacos, 53,8% eram do sexo masculino e a idade do grupo variou entre 65 e 99 anos, com mediana de 74 anos. A distribuição das comorbidades foi similar entre os casos de óbito e os sobreviventes, com exceção da hipertensão. 74,3% dos sobreviventes eram hipertensos, entre óbitos esse percentual foi de 56,8%. Na Tabela 1 verifica-se a distribuição das características dos idosos que iniciaram hemodiálise no período de janeiro de 2002 a dezembro de 2009 segundo registros austríacos.  
 
-Os estudos co pacientes idosos em terapia renal substitutiva devem levar em consideração a expectativa de vida restante do paciente, que usualmente é limitado pela presença de comorbidades, como diabetes, hipertensão, doença vascular, doença do coração etc. O objetivo desse trabalho foi investigar o efeito das comorbidades sobre o tempo de sobrevivência de pacientes com doença renal crônica em estágio 5 que iniciaram hemodiálise a partir dos 65 anos de idade com base em dados de sistema de informação sobre diálise e transplante austríaco.  
+```{r Tabela1}
+#| label: tbl-Tabela1
+#| tbl-cap: "Características da coorte de idosos que iniciaram hemodiálise entre 2002 e 2009, segundo status (óbito) ao final do seguimento - Áustria."
+#| warning: false
+#| echo: false
+#| message: false
 
-**2. Métodos**
+kbl(tabela1, align = "lcccc") %>%
+kable_classic(full_width = F) %>%
+footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
+)
+```
 
-Os dados analisados neste trabalho são provenientes de um estudo austríaco publicado na Revista PLoS ONE em 2017 intitulado "*Survival analysis of conservative vs. dialysis
-treatment of elderly patients with CKD stage 5* e encontram-se disponíveis na página eletrônica da revista [ artigo; dados]. Esses dados foram originalmente obtidos a partir do registro de diálise e transplante austríaco - *Austrian Dialysis and Transplant Registry (OEDTR) - que identificou 8.622 pacientes incidentes de hemodiálise com idade igual o superior a 65 anos no período de janeiro de 2002 a dezembro de 2009.
+A @fig-Figura1 ilustra a probabilidade de sobrevivência global dos pacientes que iniciaram hemodiálise. A mediana de sobrevivência dos pacientes incidentes em hemodiálise foi de 26,9 meses (IC 95%: 25,8;28,0). O tempo máximo de acompanhamento da coorte foi de 195 meses (16,2 anos).
 
-O desfecho no estudo é o tempo em meses desde o início da hemodiálise até o óbito. As covariáveis analisadas se referem às comorbidades dos pacientes são: Diabetes mellitus (DM), hipertensão arterial (HA), doença do coração, neoplasia, doença hepática, doença vascular e doença pulmonar obstrutiva crônica (DPOC). Tratam-se todas de variáveis dicotômicas, ou seja, estão presentes ou ausentes (sim e não) e não tempo-dependentes. Também foram analisados os efeitos da idade e do sexo sobre o tempo de sobrevivência.
+```{r Figura1, echo=FALSE, message=FALSE, warning=FALSE}
+#| label: fig-Figura1
+#| fig-cap: "Curva de sobrevivência estimada pelo Kaplan-Meier dos pacientes em hemodiálise com intervalo de confiança de 95%."
 
-Para estimar o efeito dessas covariáveis sobre o tempo de sobrevivência dos idosos em hemodiálise, foi ajustado um modelo de risco proporcionais de Cox que é definido como um modelo semiparamétrico, pois assume uma forma paramétrica para o efeito das covariáveis e uma não paramétrica para a função de risco basal [marilia].
+plot1
 
-Incialmente  as covariáveis foram analisadas quanto à distribuição das frequências absolutas e relativas segundo o evento de interesse, óbito. Utilizou-se modelo não paramétrico de Kaplan-Meier para avaliar a sobrevida global dos pacientes e a sobrevida de acordo com a presença de cada comorbidade.  Essa análise incial permitiu explorar o efeito das covariáveis sobre o tempo de sobrevivência em hemodiálise, bem como avaliar de modo preliminar a premissa de proporcionalidade dos riscos do modelo de Cox.
+```
 
-O processo de modelagem foi realizado basicamente em três etapas descritas a seguir:
+Os gráficos de Kaplan Meier ilustrando o efeito de cada covariável e respectivos resultados dos testes log-rank são mostrados na @fig-Figura2 . Verifica-se visualmente maior diferença no comportameto das curvas para a variável hipertensão,  indicando que a presença dessa comorbidade aumenta o tempo de sobrevivência dos pacientes. Diferenças significativas no teste foram observadas para as covariáveis DM, hipertensão, doença hepática e DPOC.
 
-1. Obtenção das estimativas dos efeitos brutos de cada covariável sobre o tempo de sobrevivência dos pacientes com modelos de Cox simples. As variáveis candidatas ao modelo múltiplo foram aquelas que apresentaram significância ao nível de 1% (valor-p \<0,1), no teste de Wald para os coeficientes desses modelos.
+```{r Figura2, echo=FALSE, message=FALSE, warning=FALSE}
+#| label: fig-Figura2
+#| fig-cap: "Curvas de sobrevivência (Kaplan-Meier) dos pacientes em hemodiálise por variáveis analisadas"
 
-2. O modelo de regressão de Cox foi elaborado comparando-se modelos aninhados com teste da razão de verossimilhança para verificar se a inclusão de uma ou mais covariáveis aumentavam de modo significativo a verossimilhança de um modelo em relação ao anterior, com menos variáveis (Anova tipo I). O nível de significância adototado foi de 5% (valor-p \<0,5). No primeiro modelo foram incluídas conjuntamente sexo e idade e em seguida nos demais, cada uma das comorbidades na seguinte ordem: Não foi verificado o efeito da interação de covariáveis.
+plot2
 
-3.  A qualidade de ajuste do modelo final foi avaliada segundo o teste Hosmer e Lemeshow e gráfico correspondente(11). Nesse teste, p-valores maiores que 0,05 indicam uma boa qualidade de ajuste do modelo. A avaliação dos pressupostos de lineariaride e independência foi realizada mediante disposição gráfica dos resíduos deviance.
-
-
-
-
+```
 
 
