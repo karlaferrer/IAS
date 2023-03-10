@@ -563,8 +563,6 @@ Por fim, realizou-se análise gráfica dos resíduos de Schoenfeld para avaliar 
 
 O principal pacote do software R v.4.1.2 ([http://www.r-project.org](http://www.r-project.org/)) utilizado neste trabalho foi o *survival*.
 
-\newpage
-
 **3. Resultados**
 
 Dos `r nrow(data)` pacientes que entraram em hemodiálise no período de 2002 a 2009 segundo registros austríacos, 53,8% eram do sexo masculino e a idade do grupo variou entre 65 e 99 anos, com mediana de 74 anos. A distribuição das comorbidades foi similar entre os casos de óbito e os sobreviventes, com exceção da hipertensão. 74,3% dos sobreviventes eram hipertensos, entre óbitos esse percentual foi de 56,8%. Na @tbl-Tabela1 verifica-se a distribuição das características dos idosos que iniciaram hemodiálise no período de janeiro de 2002 a dezembro de 2009 segundo registros austríacos.
@@ -578,8 +576,7 @@ Dos `r nrow(data)` pacientes que entraram em hemodiálise no período de 2002 a 
 
 kbl(tabela1, align = "lcccc") %>%
 kable_classic(full_width = F) %>%
-footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
-)
+footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica")
 ```
 
 A @fig-Figura1 ilustra a probabilidade de sobrevivência global dos pacientes que iniciaram hemodiálise. A mediana de sobrevivência dos pacientes incidentes em hemodiálise foi de 26,9 meses (IC 95%: 25,8;28,0). O tempo máximo de acompanhamento da coorte foi de 195 meses (16,2 anos).
@@ -637,7 +634,7 @@ Os gráficos de sobrevicência estratificados por índice prognóstico dos model
 #| echo: false
 #| message: false
 
-kbl(tabela3, align = "llcc") %>%
+kbl(tabela3, align = "clcc") %>%
 kable_classic(full_width = F) #%>%
 #footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
 #)
@@ -646,9 +643,7 @@ kable_classic(full_width = F) #%>%
 
 ```{r Figura4, echo=FALSE, message=FALSE, warning=FALSE}
 #| label: fig-Figura4
-#| fig-cap: "Gráfico de sobrevivência estratificado por índice prognóstico para os modelos 1 a 6. Lnha sólida representa o modelo ajustado e linha pontihada, a estimativa de Kaplan-Meier"
-#| out.width = "80%"
-#| out.height = "80%"
+#| fig-cap: "Gráfico de sobrevivência estratificado por índice prognóstico para os modelos 1 a 6. Linha sólida representa o modelo ajustado e a linha pontilhada a estimativa de Kaplan-Meier"
 
 knitr::include_graphics("Concord_m6.jpg")
 
@@ -656,12 +651,3 @@ knitr::include_graphics("Concord_m6.jpg")
 
 Na Figura 5 como o efeito de cada covariável se comporta no tempo com as curvas de suavização *lowes* dos resíduos de Shoenfeld. Os resíduos não foram dispostos, pois o número de observações não permite uma boa visualização.O pressuposto de proporcionalidde dos riscos do modelo de Cox não é atendido para a variável hipertensão, pois há tendência linear ao longo dos meses, ou seja, quanto mais o tempo avança, maior o efeito da hipertensão sobre o risco de óbito em hemodiálise.
 
-```{r Figura5, echo=FALSE, message=FALSE, warning=FALSE}
-#| label: fig-Figura4
-#| fig-cap: "Gráfico de sobrevivência estratificado por índice prognóstico para os modelos 1 a 6. Lnha sólida representa o modelo ajustado e linha pontihada, a estimativa de Kaplan-Meier"
-#| out.width = "80%"
-#| out.height = "80%"
-
-knitr::include_graphics("Concord_m6.jpg")
-
-```
