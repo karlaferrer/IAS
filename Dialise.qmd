@@ -9,6 +9,7 @@ format:
 csl: epidemiology.csl
 bibliography: references.bib
 ---
+
 **Disciplina: Introdução à Análise de Sobrevivência - 2023**
 
 **Programa de Pós-Graduação Stricto-Sensu em Epidemiologia em Saúde Pública, Escola Nacional de Saúde Pública Sergio Arouca, Fundação Oswaldo Cruz. Rio de Janeiro, março de 2023.**
@@ -35,7 +36,7 @@ pacman::p_load(
   ResourceSelection, #qualidade do ajuste
   ggplot2,
   gridExtra, # forest plot OR e IC 
-  equatiomatic #escrever equacoes 
+  riskRegression #escrever formula cox 
   )
 
 ```
@@ -195,9 +196,11 @@ splots[[8]] <- ggsurvplot(survfit(y ~ COPD, data = data), data = data,conf.int=F
            xlab = "Meses", ylab = "S(t)") 
 
 # Arrange multiple ggsurvplots and print the output
-plot2 <- arrange_ggsurvplots(splots[1:4], print = TRUE, ncol = 2, nrow = 2)
-plot3 <- arrange_ggsurvplots(splots[5:8], print = TRUE, ncol = 2, nrow = 2)
 
+jpeg(file="KM_estrat.jpg", width = 15, height = 20, units = "cm", pointsize = 12,
+     res = 600, quality = 85)
+arrange_ggsurvplots(splots, print = TRUE, surv.plot.height = 0.9, ncol = 2, nrow = 4)
+dev.off()
 ```
 
 ```{r logrank, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
@@ -394,9 +397,10 @@ tbl_regression(exp = TRUE)
 #6.2 Indice prognostico
 
 source("Rfun.r")
-jpeg(file="Concord_m6.jpg")
+jpeg(file="Concord_m6.jpg", width = 20, height = 20, units = "cm", pointsize = 12,
+     res = 600, quality = 85)
 
-par(mfrow = c(2,3))
+par(mfrow = c(3,2))
 plot.pi(m1, main = "Modelo 1", xlab = "Meses")
 plot.pi(m2, main = "Modelo 2", xlab = "Meses" )
 plot.pi(m3, main = "Modelo 3", xlab = "Meses")
@@ -406,8 +410,6 @@ plot.pi(m6, main = "Modelo 6", xlab = "Meses")
 
 dev.off()
 ```
-
-\newpage
 
 ```{r shoenfeld, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #7.1 Analise de residuos
@@ -420,7 +422,7 @@ covar <- c("Beta (t) para Sexo","Beta (t) para Idade",
           "Beta (t) para Doença hepática","Beta (t) para Doença vascular", 
           "Beta (t) para DPOC")
               
-jpeg(file = "Shoenfeld%02d.jpg")
+jpeg(file = "Shoenfeld%2d.jpg")
 for (k in 1:length(m6$coefficients)){
 plot(res.sho[k], xlab = "Meses", col= c("red", "blue"), ylab = covar[k], 
      resid = FALSE, se= TRUE)
@@ -433,6 +435,45 @@ res.sho
 #outra opcao grafica
 #ggcoxzph(res.sho, font.x = 10, font.y=10, main = "")
 #Ref http://www.sthda.com/english/wiki/cox-model-assumptions
+
+```
+
+```{r mod_7, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+#constatada a nao proporcionalidade para hipertensao
+#o modelo sera estratificado por essa variavel
+
+m7<- coxph(y ~ Gender + idade + DM + hypert + liver + vascular + COPD 
+           + strata (hypert), 
+           x= TRUE, data = data) 
+
+summary(m7)
+
+#Coeficientes do modelo para equacao da regressao
+coef_m7<-m7$coefficients
+
+#plot.pi(m7, main = "Modelo 7" )
+#o indice prognistico nao funciona aqui
+
+```
+
+```{r shoenf_mod7, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+
+res.sho7 <- cox.zph(m7)
+
+covar2 <- c("Beta (t) para Sexo","Beta (t) para Idade",
+          "Beta (t) para DM",
+          "Beta (t) para Doença hepática","Beta (t) para Doença vascular", 
+          "Beta (t) para DPOC")
+              
+jpeg(file = "Shoenf_m7%2d.jpg")
+for (k in 1:length(m7$coefficients)){
+plot(res.sho[k], xlab = "Meses", col= c("red", "blue"), ylab = covar[k], 
+     resid = FALSE, se= TRUE)
+abline(h=m7$coefficients[k], lty=4, col=2 )
+}
+dev.off()
+
+res.sho7
 
 ```
 
@@ -454,8 +495,11 @@ lines(lowess(data$idade, mod0.mar, iter = 0), lty = 2)
 #tendência linear e o lowess está em torno do zero.
 
 #outra forma
-ggcoxfunctional(Surv(Time_to_Event, dead) ~ idade, data = data,
-                ggtheme = theme_minimal())
+ggcoxfunctional(Surv(Time_to_Event, dead) ~ age10, data = data,
+                ggtheme = theme_minimal(),
+                ylab = "Resíduos Martingale - modelo nulo",
+                xlab = "Idade (década)"
+                ) ->plot5
 
 ```
 
@@ -470,11 +514,11 @@ abline(h=0, col="red")
 #(sum(res.dev  > 2) + sum(res.dev  < (-2)))/length(data$ID)
 
 #outra forma
-ggcoxdiagnostics(m6, type = "deviance",
+ggcoxdiagnostics(m7, type = "deviance",
                  linear.predictions = FALSE, sline = FALSE, ggtheme = theme_minimal(),
                  ylab = "Resíduos deviance",
-                 xlab = "Índice"
-                 )
+                 xlab = "Índice", 
+                 ) -> plot6
 
 ```
 
@@ -491,51 +535,38 @@ plot (data$vascular , res.esc[,6],xlab = "D. vascular", ylab = "Resíduos escore
 plot (data$COPD , res.esc[,7],xlab = "DPOC", ylab = "Resíduos escore")
 
 #outra forma 
-ggcoxdiagnostics(m6, type = "dfbeta",
+
+jpeg(file="escore.jpg", width = 15, height = 20, units = "cm", pointsize = 12,
+     res = 600, quality = 85)
+ggcoxdiagnostics(m7, type = "dfbeta",
                  linear.predictions = FALSE,
                  sline = FALSE,
                  ylab = "Resíduos dfbeta",
                  xlab = "Índice",
                  ggtheme = theme_minimal())
+dev.off()
+```
+```{r tab4, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE }
+# Cox Proportional Hazards multivariable analysis
+#strata - hypert
 
+#Gerar a tabela com finalfit
+explanatory2 = c("Gender", "DM", "strata(hypert)", "heart","neoplasia","liver",
+                "vascular", "COPD", "age10")
+data %>%
+  coxphmulti(dependent, explanatory2)%>%
+  fit2df() -> tabela4
+
+names(tabela4) <- c("Variável", "Razão de riscos (IC 95%, valor-p)")
+tabela4[,1] <- c("Sexo (M)","DM (Sim)", 
+              "Doença do coração (Sim)", "Neoplasia (Sim)", 
+              "Doença hepática (Sim)","Doença vascular (Sim)", "DPOC (Sim)",
+             "Idade (década)")
 ```
 
-```{r mod_7, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
-#constatada a nao proporcionalidade para hipertensao
-#o modelo sera estratificado por essa variavel
 
-m7<- coxph(y ~ Gender + idade + DM + hypert + liver + vascular + COPD 
-           + strata (hypert), 
-           x= TRUE, data = data) 
 
-summary(m7)
-
-#plot.pi(m7, main = "Modelo 7" )
-#o indice prognistico nao funciona aqui
-
-```
-
-```{r resid-mod7, include= FALSE, echo = FALSE, message=FALSE, warning=FALSE}
-
-#7.1 Analise de residuos
-
-#Proporcionalidade - Shoenfeld
-res.sho <- cox.zph(m7)
-plot(res.sho, xlab = "Anos", col= c("red", "blue"))
-abline(h=0, col="grey")
-
-plot(res.sho, xlab = "Anos", col= c("red", "blue"), resid = FALSE)
-abline(h=0, col="grey")
-
-res.sho
-
-#outra opcao grafica
-ggcoxzph(res.sho, font.x = 10, font.y=10, main = "")
-#Ref http://www.sthda.com/english/wiki/cox-model-assumptions
-
-```
-
-**1. Introdução**
+# **1. Introdução**
 
 Descrever sucintamente o problema analisado, objetivo e as vari aveis escolhidas para a analise.
 
@@ -543,7 +574,7 @@ A doença renal crônica evolui com a idade. Definição de estágio final da DR
 
 Os estudos com pacientes idosos em terapia renal substitutiva devem levar em consideração a expectativa de vida restante do paciente, que usualmente é limitado pela presença de comorbidades, como diabetes, hipertensão, doença vascular, doença do coração etc. O objetivo desse trabalho foi investigar o efeito das comorbidades sobre o tempo de sobrevivência de pacientes com doença renal crônica em estágio 5 que iniciaram hemodiálise a partir dos 65 anos de idade com base em dados de sistema de informação sobre diálise e transplante austríaco.
 
-**2. Métodos**
+# **2. Métodos**
 
 Os dados analisados neste trabalho são provenientes de um estudo austríaco publicado na Revista PLoS ONE em 2017 intitulado "*Survival analysis of conservative vs. dialysis treatment of elderly patients with CKD stage 5* e encontram-se disponíveis na página eletrônica da revista \[ artigo; dados\]. Esses dados foram originalmente obtidos a partir do registro de diálise e transplante austríaco - \*Austrian Dialysis and Transplant Registry (OEDTR) - que identificou 8.622 pacientes incidentes de hemodiálise com idade igual o superior a 65 anos no período de janeiro de 2002 a dezembro de 2009.
 
@@ -563,9 +594,11 @@ Por fim, realizou-se análise gráfica dos resíduos de Schoenfeld para avaliar 
 
 O principal pacote do software R v.4.1.2 ([http://www.r-project.org](http://www.r-project.org/)) utilizado neste trabalho foi o *survival*.
 
-**3. Resultados**
+# **3. Resultados**
 
 Dos `r nrow(data)` pacientes que entraram em hemodiálise no período de 2002 a 2009 segundo registros austríacos, 53,8% eram do sexo masculino e a idade do grupo variou entre 65 e 99 anos, com mediana de 74 anos. A distribuição das comorbidades foi similar entre os casos de óbito e os sobreviventes, com exceção da hipertensão. 74,3% dos sobreviventes eram hipertensos, entre óbitos esse percentual foi de 56,8%. Na @tbl-Tabela1 verifica-se a distribuição das características dos idosos que iniciaram hemodiálise no período de janeiro de 2002 a dezembro de 2009 segundo registros austríacos.
+
+\newpage
 
 ```{r Tabela1}
 #| label: tbl-Tabela1
@@ -589,21 +622,14 @@ plot1
 
 ```
 
-A seguir, os gráficos de Kaplan Meier ilustrando o efeito de cada covariável e respectivos resultados dos testes log-rank (@fig-Figura2 e @fig-Figura3). Verifica-se visualmente maior diferença no comportameto das curvas para a variável hipertensão, indicando que a presença dessa comorbidade aumenta o tempo de sobrevivência dos pacientes. Diferenças significativas no teste foram observadas para as covariáveis DM, hipertensão, doença hepática e DPOC.
+A seguir, os gráficos de Kaplan Meier ilustrando o efeito de cada covariável e respectivos resultados dos testes log-rank (@fig-Figura2). Verifica-se visualmente maior diferença no comportameto das curvas para a variável hipertensão, indicando que a presença dessa comorbidade aumenta o tempo de sobrevivência dos pacientes. Diferenças significativas no teste foram observadas para as covariáveis DM, hipertensão, doença hepática e DPOC.
 
-```{r Figura2, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Figura2, echo=FALSE, message=FALSE, warning=FALSE, out.width="20cm",out.height="20cm" }
 #| label: fig-Figura2
 #| fig-cap: "Curvas de sobrevivência (Kaplan-Meier) dos pacientes em hemodiálise por variáveis analisadas"
 
-plot2
 
-```
-
-```{r Figura3, echo=FALSE, message=FALSE, warning=FALSE}
-#| label: fig-Figura3
-#| fig-cap: "Curvas de sobrevivência (Kaplan-Meier) dos pacientes em hemodiálise por variáveis analisadas"
-
-plot3
+knitr::include_graphics("KM_estrat.jpg", dpi=600)
 
 ```
 
@@ -625,7 +651,7 @@ kable_classic(full_width = F) #%>%
 
 A @tbl-Tabela3 apresenta a comparação dos modelos aninhados com teste da razão de verossimilhanças para para a seleção do modelo de Cox com as covariáveis definidas na etapa anterior. Observa-se que inclusão de sucessiva das covariáveis resultou no aumento significativo da verossilhança (logik). A hipótese nula de que não há diferença entre os modelos foi rejeitada e o melhor modelo ajustado foi o 6 (sexo, idade, DM, hipertensão, doença hepática, doença vascular e DPOC). O Modelo 6 tem probabilidade de concordância de 0,6, indicando uma qualidade de ajuste considerada comum em análise de dados de sobrevivência.
 
-Os gráficos de sobrevicência estratificados por índice prognóstico dos modelos mostram que os modelos 1 e 2 parecem discriminar melhor os grupos e ajustam-se bem (@fig-Figura4). Apesar da inclusão de variáveis melhorar a verossimilhança, o Modelo 6 apresenta as curvas do modelo e Kaplan-Meier mais distantes, no entanto, discrimina de modos razável os três grupos de índice prognóstico e foi mantido para análise de resíduos.
+Os gráficos de sobrevicência estratificados por índice prognóstico dos modelos mostram que os modelos 1 e 2 parecem discriminar melhor os grupos e ajustam-se bem (@fig-Figura3). Apesar da inclusão de variáveis melhorar a verossimilhança, o Modelo 6 apresenta as curvas do modelo e Kaplan-Meier mais distantes, no entanto, discrimina de modos razável os três grupos de índice prognóstico e foi mantido para análise de resíduos.
 
 ```{r Tabela3}
 #| label: tbl-Tabela3
@@ -641,13 +667,97 @@ kable_classic(full_width = F) #%>%
 
 ```
 
-```{r Figura4, echo=FALSE, message=FALSE, warning=FALSE}
-#| label: fig-Figura4
+```{r Figura3, echo=FALSE, message=FALSE, warning=FALSE, out.width="15cm",out.height="20cm"}
+#| label: fig-Figura3
 #| fig-cap: "Gráfico de sobrevivência estratificado por índice prognóstico para os modelos 1 a 6. Linha sólida representa o modelo ajustado e a linha pontilhada a estimativa de Kaplan-Meier"
 
-knitr::include_graphics("Concord_m6.jpg")
+
+knitr::include_graphics("Concord_m6.jpg", dpi = 600)
 
 ```
 
-Na Figura 5 como o efeito de cada covariável se comporta no tempo com as curvas de suavização *lowes* dos resíduos de Shoenfeld. Os resíduos não foram dispostos, pois o número de observações não permite uma boa visualização.O pressuposto de proporcionalidde dos riscos do modelo de Cox não é atendido para a variável hipertensão, pois há tendência linear ao longo dos meses, ou seja, quanto mais o tempo avança, maior o efeito da hipertensão sobre o risco de óbito em hemodiálise.
+Na @fig-Figura4 observa-se com as curvas de suavização *lowes* dos resíduos de Shoenfeld, como o efeito de cada covariável se comporta no tempo. Os resíduos não foram dispostos nos gráficos, pois o número de observações não permite uma boa visualização. No caso da variável hipertensão,verica-se claramente que o pressuposto de proporcionalide dos riscos não é atendido, pois há tendência linear ao longo dos meses, ou seja, quanto mais o tempo avança, maior o efeito da hipertensão sobre o risco de óbito em hemodiálise. A linha referente ao coeficiente do modelo (beta) extrapola o intervalo de confiança da curva. Nas demais variáveis observamos a reta que representa os coeficientes do modelo dentro dos intervalos de confiança, com variações ao longo do tempo aleatórias, sem expressão notadamente linear.
 
+\newpage
+
+```{r Figura4, out.width="10%"}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-Figura4
+#| fig-cap: "Curvas *lowes* dos resíduos de Shoenfeld para o Modelo 6."
+#| fig-subcap: 
+#|   - "Sexo"
+#|   - "Idade"
+#|   - "DM"
+#|   - "Hipertensão"
+#|   - "Doença hepática"
+#|   - "Doença cardiovascular"
+#|   - "DPOC"
+#| layout-ncol: 3
+
+Res_Sho<- c(paste0("Shoenfeld ", c(1:7), ".jpg"))
+
+knitr::include_graphics(Res_Sho, dpi = 600)
+
+```
+
+\newpage
+
+Dessa forma, o Modelo 7 foi ajustado com estratificação pela covariável hipertensão e encontra-se representado na equação abaixo:
+
+$$\lambda{j}(t|x)=\lambda_{0j}(t)exp(x\beta), j= 1,2
+$$
+
+onde $$ \lambda_{0j} $$
+
+representa o risco basal dos indivíduos com hipertensão (*j=1*) e sem hipertensão (*j=2*) e
+
+$$
+\beta = (0.06152553,0.03592522,0.21461930,0.21339175,0.12605244, -0.14019635),
+$$
+
+o vetor dos coeficientes do modelo para as covariáveis *x*: sexo masculino, idade, DM (sim), hipertensão (sim), doença hepática (sim), doença vascular (sim) e DPOC(sim), respectivamente.
+
+```{r Figura5, echo=FALSE, message=FALSE, warning=FALSE}
+#| label: fig-Figura5
+#| fig-cap: "Idade (década) contra resíduos martingale do modelo nulo."
+#| out-width: "70%"
+
+#Martingale
+plot5
+
+```
+
+```{r Figura6, echo=FALSE, message=FALSE, warning=FALSE}
+#| label: fig-Figura6
+#| fig-cap: "Resíduos *deviance* do Modelo 7."
+#| out-width: "70%"
+
+#Deviance
+plot6
+
+```
+
+```{r Figura7, echo=FALSE, message=FALSE, warning=FALSE, out.width="15cm",out.height="20cm"}
+#| label: fig-Figura7
+#| fig-cap: "Resíduos escore do Modelo 7."
+#| out-width: "80%"
+
+#Escore
+knitr::include_graphics("escore.jpg", dpi = 600)
+```
+
+```{r Tabela4}
+#| label: tbl-Tabela4
+#| tbl-cap: "Razão de riscos com intervalos de confiança 95% do modelo de Cox estratificado pela variável hipertensão"
+#| warning: false
+#| echo: false
+#| message: false
+
+kbl(tabela4, align = "lc") %>%
+kable_classic(full_width = F) #%>%
+#footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
+#)
+
+```
