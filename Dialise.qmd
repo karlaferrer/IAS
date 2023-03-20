@@ -458,6 +458,7 @@ m7<- coxph(y ~ Gender + age10 + DM + hypert + liver + vascular + COPD
            x= TRUE, data = data) 
 
 summary(m7)
+m7$loglik
 
 #Coeficientes do modelo para equacao da regressao
 coef_m7<-round(m7$coefficients,2)
@@ -597,7 +598,7 @@ plot8 <- ggplot(dat, aes(y = Index, x = HR)) +
   geom_errorbarh(aes(xmin = LL, xmax = UL), height = 0.25) +
   geom_vline(xintercept = 1, color = "red", linetype = "dashed", cex = 1, alpha = 0.5) +
   scale_y_continuous(name = "", breaks=1:6, labels = dat$label, trans = "reverse") +
-  xlab("Razão de riscos (95% CI)") + 
+  xlab("Razão de riscos (IC 95%)") + 
   ylab(" ") + 
   theme_bw() +
   theme(panel.border = element_blank(),
@@ -616,19 +617,20 @@ plot8
 
 A prevalência da doença renal crônica (DRC) em estágio terminal é alta em várias partes do mundo, com mais de um milhão de pessoas recebendo terapia renal substitutiva - TRS[@schena2000]. Esse estágio é caracterizado pela baixa e insuficiente capacidade funcional dos rins com taxa de filtração glomerular (GRF) \< 15 mL/min/1,73m^2^. Nessa fase da doença, o paciente passa a depender de alguma modalidade de TRS para sobreviver, sendo a diálise a mais comum[@nationalkidney; @sacarvalho2003].
 
-A doença de base da DRC é fator prognóstico importante para os pacientes em TRS. Nesse sentido, o papel da Diabetes mellitus (DM) é amplamente conhecido na redução da sobrevida e o prognóstico é mais grave no caso de pacientes idosos [@schena2000]. O estágio terminal da DRC está se tornado uma condição geriátrica, dentre os incidentes, o maior aumento da taxa de incidência ocorre em pacientes com idade entre 65 a 74 anos[@berger2012]. Assim, estudos com pacientes idosos em TRS devem levar em consideração a expectativa de vida restante do paciente, que usualmente é limitada pela presença de comorbidades, como diabetes, hipertensão, doença do coração e outras[@reindl-schwaighofer2017]. Dessa forma, objetivo desse trabalho foi investigar o efeito de comorbidades sobre o risco de óbito de pacientes com DRC em estágio terminal que iniciaram hemodiálise a partir dos 65 anos na Áustria.
+A doença de base da DRC é fator prognóstico importante para os pacientes em TRS. Nesse sentido, o papel da Diabetes mellitus (DM) é amplamente conhecido na redução da sobrevida e o prognóstico é mais grave no caso de pacientes idosos [@schena2000]. O estágio terminal da DRC está se tornado uma condição geriátrica, o maior aumento da taxa de incidência ocorre em pacientes com idade entre 65 a 74 anos[@berger2012]. Assim, estudos com pacientes idosos em TRS devem levar em consideração a expectativa de vida restante do paciente, que usualmente é limitada pela presença de comorbidades, como diabetes, hipertensão, doença do coração e outras[@reindl-schwaighofer2017]. 
+O objetivo desse trabalho foi investigar o efeito de comorbidades sobre o risco de óbito de pacientes com DRC em estágio terminal que iniciaram hemodiálise a partir dos 65 anos na Áustria.
 
 # **2. Métodos**
 
-Os dados analisados neste trabalho são provenientes de um estudo austríaco publicado na Revista PLoS ONE em 2017 intitulado "*Survival analysis of conservative vs. dialysis treatment of elderly patients with CKD stage 5* e encontram-se disponíveis na página eletrônica da revista [@reindl-schwaighofer2017]; @raindl-schwaighofer2017]. Esses dados foram originalmente obtidos a partir do registro de diálise e transplante austríaco - \*Austrian Dialysis and Transplant Registry (OEDTR)\* - que identificou 8.622 pacientes incidentes de hemodiálise com idade igual o superior a 65 anos no período de janeiro de 2002 a dezembro de 2009. Essa coorte, construída de foma retrospectiva, teve um tempo máximo de acompanhamento de cerca de 16 anos.
+Os dados analisados neste trabalho são provenientes de um estudo austríaco publicado na Revista PLoS ONE em 2017 intitulado "*Survival analysis of conservative vs. dialysis treatment of elderly patients with CKD stage 5* e encontram-se disponíveis na página eletrônica da revista [@reindl-schwaighofer2017; @raindl-schwaighofer2017]. Esses dados foram originalmente obtidos a partir do registro de diálise e transplante austríaco - *Austrian Dialysis and Transplant Registry (OEDTR)* - que identificou 8.622 pacientes incidentes de hemodiálise com idade igual o superior a 65 anos no período de janeiro de 2002 a dezembro de 2009. Essa coorte, construída de foma retrospectiva, teve tempo máximo de acompanhamento de cerca de 16 anos.
 
-O desfecho no estudo é o tempo em meses desde o início da hemodiálise até o óbito. As covariáveis analisadas se referem às comorbidades dos pacientes são: Diabetes mellitus (DM), hipertensão arterial (HA), doença do coração, neoplasia, doença hepática, doença vascular e doença pulmonar obstrutiva crônica (DPOC). Tratam-se todas de variáveis dicotômicas, ou seja, estão presentes ou ausentes (sim e não) e não tempo-dependentes. Também foram analisados os efeitos da idade e do sexo sobre o tempo de sobrevivência.
+O desfecho no estudo é o tempo em meses desde o início da hemodiálise até o óbito ou fim do seguimento. As covariáveis analisadas se referem às comorbidades dos pacientes: Diabetes mellitus (DM), hipertensão arterial (HA), doença do coração, neoplasia, doença hepática, doença vascular e doença pulmonar obstrutiva crônica (DPOC). Tratam-se todas de variáveis dicotômicas, ou seja, estão presentes ou ausentes (sim e não) e não tempo-dependentes. Também foram analisados os efeitos da idade e do sexo sobre o tempo de sobrevivência.
 
 Para estimar o efeito dessas covariáveis sobre o risco de óbito dos idosos em hemodiálise, foi ajustado um modelo de risco proporcionais de Cox que é definido como um modelo semiparamétrico, pois assume uma forma paramétrica para o efeito das covariáveis e uma não paramétrica para a função de risco basal [@shimakura2011].
 
 Incialmente as covariáveis foram analisadas quanto à distribuição das frequências absolutas e relativas segundo o evento de interesse, óbito. Utilizou-se modelo não paramétrico de Kaplan-Meier para avaliar a sobrevida global dos pacientes e a sobrevida de acordo com a presença de cada comorbidade. O teste de log-rank ou Mantel Haenzel foi empregado para compraração formal das curvas adotando-se nível de significância de 5%. Essa análise inicial permite explorar o efeito das covariáveis sobre o tempo de sobrevivência em hemodiálise, bem como avaliar de modo preliminar a premissa de proporcionalidade dos riscos do modelo de Cox.
 
-O processo de modelagem foi realizado basicamente em quatro etapas. Em primeiro lugar, foram obtidas as estimativas dos efeitos brutos de cada covariável sobre o tempo de sobrevivência dos pacientes com modelos de Cox simples. As variáveis candidatas ao modelo múltiplo foram aquelas que apresentaram significância ao nível de 2% (p-valor \<0,2) no teste de Wald para os coeficientes desses modelos.
+O processo de modelagem foi realizado basicamente em quatro etapas. Em primeiro lugar, foram obtidas as estimativas dos efeitos brutos de cada covariável sobre o tempo de sobrevivência dos pacientes com modelos de Cox simples. As variáveis candidatas ao modelo múltiplo foram aquelas que apresentaram significância ao nível de 20% (p-valor \<0,2) no teste de Wald para os coeficientes desses modelos.
 
 Em seguida, o modelo de regressão de Cox foi elaborado comparando-se modelos aninhados com teste da razão de verossimilhança para verificar se a inclusão de uma covariável aumentava de modo significativo a verossimilhança do modelo maior em relação ao anterior, com menos variáveis (Anova tipo I). O nível de significância adototado foi de 5% (p-valor \<0,05). No primeiro modelo foram incluídas conjuntamente sexo e idade e nos subsequentes, cada uma das comorbidades que tiveram efeito signficativo nos modelos simples, uma a uma, sem ordem de importância definida por referencial teórico.
 
@@ -681,7 +683,7 @@ knitr::include_graphics("KM_estrat.jpg", dpi=600)
 
 \newpage
 
-A @tbl-Tabela2 apresenta os efeitos de cada variável sobre o tempo de sobrevivência em hemodiálise com modelos de Cox simples. Dessa forma, as variáveeis elegíveis para o modelo múltiplo são idade, DM, hipertensão, doença hepática e DPOC (p-valor \< 0,2). No modelo univariado, o efeito da hipertensão é protetivo, ou seja, reduz o risco de óbito em 32%. De modo similar, a presença de DPOC reduz o risco de óbito de idosos em hemodiálise por unidade de tempo (mês) em 16%. Por outro lado, o efeito isolado da DM representa um aumento no risco de óbito de 6% na coorte e doença hepática aumenta esse risco em 16%.
+A @tbl-Tabela2 apresenta os efeitos de cada variável sobre o tempo de sobrevivência em hemodiálise com modelos de Cox simples. Dessa forma, as variáveeis elegíveis para o modelo múltiplo são idade, DM, hipertensão, doença hepática, doença vascular e DPOC (p-valor \< 0,2). No modelo univariado, o efeito da hipertensão é protetivo, ou seja, reduz o risco de óbito em 32%. De modo similar, a presença de DPOC reduz o risco de óbito de idosos em hemodiálise por unidade de tempo (mês) em 16%. Por outro lado, o efeito isolado da DM representa um aumento no risco de óbito de 6% na coorte e doença hepática aumenta esse risco em 16%.
 
 A @tbl-Tabela3 apresenta a comparação dos modelos aninhados com teste da razão de verossimilhanças para para a seleção do modelo de Cox. Observa-se que inclusão de sucessiva das covariáveis resultou no aumento significativo da verossilhança (logik). A hipótese nula de que não há diferença entre os modelos foi rejeitada e o melhor modelo ajustado foi o 6 (sexo, idade, DM, hipertensão, doença hepática, doença vascular e DPOC). O Modelo 6 tem probabilidade de concordância de 0,6, indicando uma qualidade de ajuste considerada comum em análise de dados de sobrevivência.
 
@@ -713,9 +715,9 @@ kable_classic(full_width = F)
 
 \newpage
 
-Os gráficos de sobrevicência estratificados por índice prognóstico dos modelos mostram que os modelos 1 e 2 parecem discriminar melhor os grupos e ajustam-se bem (@fig-Figura3). Apesar da inclusão de variáveis melhorar a verossimilhança, o Modelo 6 apresenta as curvas do modelo e Kaplan-Meier mais distantes, no entanto, discrimina de modos razável os três grupos de índice prognóstico e foi mantido para análise de resíduos.
+Os gráficos de sobrevivência estratificados por índice prognóstico dos modelos mostram que os modelos 1 e 2 parecem discriminar melhor os grupos e ajustam-se bem (@fig-Figura3). Apesar da inclusão de variáveis melhorar a verossimilhança, o Modelo 6 apresenta as curvas do modelo e Kaplan-Meier mais distantes, mas ainda assim, discrimina de modo razoável os três grupos de índice prognóstico e foi mantido para análise de resíduos.
 
-Na @fig-Figura4 observa-se pelas curvas de suavização *lowes* dos resíduos de Shoenfeld, como o efeito de cada covariável se comporta ao longo do tempo. Os resíduos não foram dispostos nos gráficos porque o número de observações não permite uma boa visualização dessas curvas. No caso da variável hipertensão,verica-se claramente que o pressuposto de proporcionalide dos riscos não é atendido, pois há tendência linear ao longo dos meses, ou seja, quanto mais o tempo avança, maior o efeito da hipertensão sobre o risco de óbito em hemodiálise. No gráfico, a linha referente ao coeficiente do modelo (beta) extrapola o intervalo de confiança da curva. Nas demais variáveis observamos as retas que representam os coeficientes do modelo dentro dos intervalos de confiança com variações aleatórias ao longo do tempo, sem expressão notadamente linear.
+Na @fig-Figura4 observa-se pelas curvas de suavização *lowes* dos resíduos de Shoenfeld, como o efeito de cada covariável se comporta ao longo do tempo. Os resíduos não foram dispostos nos gráficos porque o número de observações não permite uma boa visualização dessas curvas. No caso da variável hipertensão,verifica-se claramente que o pressuposto de proporcionalide dos riscos não é atendido, pois há tendência linear ao longo dos meses, ou seja, quanto mais o tempo avança, maior o efeito da hipertensão sobre o risco de óbito em hemodiálise. No gráfico, a linha referente ao coeficiente do modelo (beta) extrapola o intervalo de confiança da curva. Nas demais variáveis observamos as retas que representam os coeficientes do modelo dentro dos intervalos de confiança com variações aleatórias ao longo do tempo, sem expressão notadamente linear.
 
 ```{r Figura3, echo=FALSE, message=FALSE, warning=FALSE, out.width="15cm",out.height="20cm"}
 #| label: fig-Figura3
@@ -760,7 +762,7 @@ $$
 \beta = (0.06,0.36,0.21,0.21,0.13, -0.14),
 $$ o vetor dos coeficientes do modelo para as covariáveis *x = (sexo masculino, idade, DM (sim), doença hepática (sim), doença vascular (sim), DPOC(sim))*, nesta ordem. Nesse modelo os coeficientes são os mesmos para hipertensos e normotensos, o que varia é o risco de base de acordo com esta condição.
 
-Esse modelo teve a probabilidade de concordância reduzida em relação ao Modelo 6 (Concordância = 0,578). Os residuos de Shoenfeld apresentaram comportamento similar aos do Modelo 6(@fig-Figura4).
+Esse modelo teve a probabilidade de concordância reduzida em relação ao Modelo 6 (Concordância = 0,578). Os resíduos de Shoenfeld apresentaram comportamento similar aos do Modelo 6.
 
 Na @fig-Figura5 confirmamos a adequação da forma funcional do Modelo 7, uma vez que a relação da variável idade em décadas com os resíduos martingale do modelo nulo é do tipo linear. Os resíduos *deviance* indicam uma quantidade considerável de pontos atípicos, totalizando 6,3% das observações do conjunto de dados(@fig-Figura6). O gráfico dos resíduos escore escalonados pelo erro padrão estão apresentados na @fig-Figura7. Observa-se uma escala bastante reduzida em todas as covariáveis, evidenciando a ausência pontos influentes.
 
@@ -786,7 +788,7 @@ plot6
 
 ```{r Figura7, echo=FALSE, message=FALSE, warning=FALSE, out.width="15cm",out.height="20cm"}
 #| label: fig-Figura7
-#| fig-cap: "Resíduos escore do Modelo 7 (O valor 1 indica a presença da comorbidade)."
+#| fig-cap: "Resíduos escore do Modelo 7 (valor 1 no eixo horizontal indica a presença da comorbidade)."
 #| out-width: "90%"
 
 #Escore
@@ -806,9 +808,8 @@ As razões de riscos e respectivos intervalos de confiança a 95% obtidos com o 
 #| message: false
 
 kbl(tabela4, align = "lc") %>%
-kable_classic(full_width = F) #%>%
-#footnote(symbol = "DPOC: Doença pulmonar obstrutiva crônica"
-#)
+kable_classic(full_width = F) %>%
+footnote(symbol = "loglik: -41799.24")
 
 ```
 
@@ -833,7 +834,7 @@ A validade do modelo proposto foi confirmada pela análise dos resíduos (Shoenf
 
 Para definir com maior rigor as covariáveis do modelo seria necessário estabelecer um referencial teórico detalhado sobre as condições que realmente afetam o prognóstico de pacientes idosos em hemodiálise. Aqui foram analisadas todas as comorbidades presentes no banco de dados e não foi definida ordem de importância para a entrada das variáveis no modelo de Cox. De antemão havia apenas a informação de que de que a Diabetes mellitus reduz a sobrevida e de prognóstico mais grave em idosos[@schena2000].
 
-Por fim, apesar de não serem desenhados com a finalidade de realização de estudos epidemiológicos e por vezes serem limitados quanto à qualidade da informação, os registros administrativos são bastante úteis para a compreensão dos processos de saúde e doença. Neste caso, o sistema de registros de TRS autríaco propiciou uma coorte de 8.622 idosos em hemodiálise, algo difícil de se conseguir em um estudo prospectivo. Para além dos efeitos das comorbidades, idade e sexo, os resultados desta análise também refletem o contexo de cuidado e atenção oferecida aos pacientes em hemodiálise naquele país.
+Por fim, apesar de não serem desenhados com a finalidade de realização de estudos epidemiológicos e por vezes serem limitados quanto à qualidade da informação, os registros administrativos são bastante úteis para a compreensão dos processos de saúde e doença. Neste caso, o sistema de registros de TRS austríaco propiciou uma coorte de 8.622 idosos em hemodiálise, algo difícil de se conseguir em um estudo prospectivo. Para além dos efeitos das comorbidades, idade e sexo, os resultados desta análise também refletem o contexo de cuidado e atenção oferecida aos pacientes em hemodiálise naquele país.
 
 # **5. Informações adicionais**
 
