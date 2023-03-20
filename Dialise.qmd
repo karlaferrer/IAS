@@ -1,5 +1,5 @@
 ---
-title: "Fatores prognósicos para a sobrevivência pacientes idosos em hemodiálise na Áustria"
+title: "Fatores prognósticos para a sobrevivência pacientes idosos em hemodiálise na Áustria"
 author: "**Karla de Araujo Ferreira**"
 lang: pt
 format:
