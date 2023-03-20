@@ -458,7 +458,7 @@ m7<- coxph(y ~ Gender + age10 + DM + hypert + liver + vascular + COPD
            x= TRUE, data = data) 
 
 summary(m7)
-m7$loglik[2]
+m7$loglik
 
 #Coeficientes do modelo para equacao da regressao
 coef_m7<-round(m7$coefficients,2)
